@@ -20,8 +20,7 @@ function App() {
   return (
     <>
       <CustomizedHook validationConfig={validationConfig} />
-      <CustomizedHook validationConfig={validationConfig} />;
-      <CustomizedHook validationConfig={validationConfig} />;
+
     </>
   )
 }
