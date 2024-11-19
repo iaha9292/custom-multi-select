@@ -2,17 +2,16 @@ import CustomizedHook from "./AutoComplete";
 
 const validationConfig = {
   singapore: {
-    type: "regex",
-    pattern: /^[a-zA-Z\s]*$/,
+    type: "length",
+    minLength: 6,
   },
   india: {
     type: "length",
     minLength: 4,
   },
   italy: {
-    type: "combined",
-    regex: /^[a-zA-Z]{3,}$/,
-    minLength: 3,
+    type: "length",
+    minLength: 2,
   },
 };
 

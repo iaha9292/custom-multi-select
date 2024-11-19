@@ -6,8 +6,15 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
 import { autocompleteClasses } from "@mui/material/Autocomplete";
+import { useSelector, useDispatch } from 'react-redux';
 import _ from 'lodash';
 import axios from "axios";
+import {
+  setSpecValue,
+  setSelectedValues,
+  setSearchedValue,
+  fetchOptionsRequest,
+} from './redux/actions';
 
 export const validateQuery = (specValue, query, validationConfig) => {
   if (!query) return false;
@@ -182,82 +189,51 @@ const Listbox = styled("ul")(
 `
 );
 
-const baseURL = "http://universities.hipolabs.com/search";
 // eslint-disable-next-line react/prop-types
 export default function CustomizedHook({ validationConfig }) {
-  const [specValue, setSpecValue] = useState(Object.keys(validationConfig)[0]);
-  const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [renderCount, setRenderCount] = useState(0);
-  const [selectedValues, setSelectedValues] = useState([]);
-  const {
-    getRootProps,
-    getInputLabelProps,
+  const dispatch = useDispatch();
+  const { specValue, options, loading, selectedValues, searchedValue } = useSelector(
+    (state) => state
+  );
+  const { getRootProps,
     getInputProps,
-    getTagProps,
     getListboxProps,
     getOptionProps,
     groupedOptions,
-    focused,
     setAnchorEl,
-  } = useAutocomplete({
-    id: "customized-hook-demo",
-    defaultValue: [],
-    multiple: true,
-    disableCloseOnSelect: true,
-    options,
-    value: selectedValues,
-    onChange: (event, newValue) => {
-      setSelectedValues(newValue);
-    },
-    getOptionLabel: (option) => option.name,
-    onInputChange: (event, value) => {
-      fetchOptions(value);
-    },
-  });
+    focused,
+    getTagProps } =
+    useAutocomplete({
+      id: 'customized-hook-demo',
+      multiple: true,
+      options,
+      value: selectedValues,
+      onChange: (event, newValue) => {
+        dispatch(setSelectedValues(newValue));
+      },
+      onInputChange: (event, value) => {
+        dispatch(setSearchedValue(value));
+        dispatch(fetchOptionsRequest(value, specValue, validationConfig));
+      },
+      getOptionLabel: (option) => option.name,
+    });
 
-  console.log("[194] rerendered ")
+  console.log({ specValue, options, loading, selectedValues, searchedValue })
+
+  // console.log("[194] rerendered ")
+  // useEffect(() => {
+  //   setRenderCount((prevCount) => prevCount + 1);
+  //   console.log(`CustomizedHook re-rendered: ${renderCount} times`);
+  // }, []);
   useEffect(() => {
-    setRenderCount((prevCount) => prevCount + 1);
-    console.log(`CustomizedHook re-rendered: ${renderCount} times`);
-  }, []);
-
-
-
-  const fetchOptions = useCallback(
-    _.debounce(async (query) => {
-      if (!specValue) {
-        setOptions([]);
-        return;
-      }
-
-      // Validate query using configuration
-      const isValidQuery = validateQuery(specValue, query, validationConfig);
-      if (!isValidQuery) {
-        console.log("since not valid fetching")
-        // setOptions([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const response = await axios.get(baseURL, {
-          params: { country: specValue, search: query },
-        });
-        setOptions(response.data);
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
-    }, 1000),
-    [specValue, validationConfig]
-  );
+    dispatch(fetchOptionsRequest(searchedValue, specValue, validationConfig));
+  }, [dispatch, specValue, validationConfig, searchedValue]);
 
   const handleSpecChange = (event) => {
-    setSpecValue(event.target.value);
+    dispatch(setSpecValue(event.target.value));
   };
-  console.log({ groupedOptions })
-  console.log({ selectedValues })
+  // console.log({ groupedOptions })
+  // console.log({ selectedValues })
 
 
   return (
@@ -292,13 +268,17 @@ export default function CustomizedHook({ validationConfig }) {
               const { key, ...tagProps } = getTagProps({ index });
               return <StyledTag key={key} {...tagProps} label={option.name} />;
             })}
-            <input {...getInputProps()} />
+            <input {...getInputProps()} value={searchedValue}
+              onChange={(e) => {
+                console.log(e.target.value);
+                dispatch(setSearchedValue(e.target.value))
+              }} />
           </InputWrapper>
         </div>
-        {loading && <div>Loading...</div>}
-        {!loading && groupedOptions.length > 0 ? (
+        {loading && <div>Fetching data...</div>}
+        {!loading && options.length > 0 ? (
           <Listbox {...getListboxProps()}>
-            {groupedOptions.map((option, index) => {
+            {options.map((option, index) => {
               const { key, ...optionProps } = getOptionProps({ option, index });
               const isSelected = selectedValues.some(
                 (selectedOption) => selectedOption.name === option.name
