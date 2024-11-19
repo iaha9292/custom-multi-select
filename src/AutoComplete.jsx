@@ -191,6 +191,7 @@ export default function CustomizedHook({ validationConfig }) {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [renderCount, setRenderCount] = useState(0);
+  const [selectedValues, setSelectedValues] = useState([]);
   const {
     getRootProps,
     getInputLabelProps,
@@ -199,7 +200,6 @@ export default function CustomizedHook({ validationConfig }) {
     getListboxProps,
     getOptionProps,
     groupedOptions,
-    value,
     focused,
     setAnchorEl,
   } = useAutocomplete({
@@ -208,6 +208,10 @@ export default function CustomizedHook({ validationConfig }) {
     multiple: true,
     disableCloseOnSelect: true,
     options,
+    value: selectedValues,
+    onChange: (event, newValue) => {
+      setSelectedValues(newValue);
+    },
     getOptionLabel: (option) => option.name,
     onInputChange: (event, value) => {
       fetchOptions(value);
@@ -255,7 +259,7 @@ export default function CustomizedHook({ validationConfig }) {
     setSpecValue(event.target.value);
   };
   console.log({ groupedOptions })
-  console.log({ value })
+  console.log({ selectedValues })
 
 
   return (
@@ -286,7 +290,7 @@ export default function CustomizedHook({ validationConfig }) {
       <div>
         <div {...getRootProps()}>
           <InputWrapper ref={setAnchorEl} className={focused ? "focused" : ""}>
-            {value.map((option, index) => {
+            {selectedValues.map((option, index) => {
               const { key, ...tagProps } = getTagProps({ index });
               return <StyledTag key={key} {...tagProps} label={option.name} />;
             })}
@@ -294,11 +298,11 @@ export default function CustomizedHook({ validationConfig }) {
           </InputWrapper>
         </div>
         {loading && <div>Loading...</div>}
-        {groupedOptions.length > 0 ? (
+        {!loading && groupedOptions.length > 0 ? (
           <Listbox {...getListboxProps()}>
             {groupedOptions.map((option, index) => {
               const { key, ...optionProps } = getOptionProps({ option, index });
-              const isSelected = value.some(
+              const isSelected = selectedValues.some(
                 (selectedOption) => selectedOption.name === option.name
               );
               return (
@@ -312,18 +316,21 @@ export default function CustomizedHook({ validationConfig }) {
                   onClick={(e) => {
                     e.preventDefault();
                     if (isSelected) {
-                      const newValue = value.filter(
-                        (selectedOption) => selectedOption.name !== option.name
+                      // Remove the option from selected values
+                      setSelectedValues((prev) =>
+                        prev.filter(
+                          (selectedOption) =>
+                            selectedOption.name !== option.name
+                        )
                       );
-                      optionProps.onClick(e, false);
-                      optionProps.setValue(newValue);
                     } else {
-                      optionProps.onClick(e, true);
+                      // Add the option to selected values
+                      setSelectedValues((prev) => [...prev, option]);
                     }
                   }}
                 >
                   <span>{option.name}</span>
-                  {/* <CheckIcon fontSize="small" /> */}
+                  {isSelected && <CheckIcon fontSize="small" style={{ color: "#1890ff" }} />}
                 </li>
               );
             })}
