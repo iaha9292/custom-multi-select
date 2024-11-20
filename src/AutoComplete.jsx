@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import PropTypes from "prop-types";
 import { useAutocomplete } from "@mui/base/useAutocomplete";
 import CheckIcon from "@mui/icons-material/Check";
@@ -194,6 +194,9 @@ export default function CustomizedHook({ specValue,
 
   const [options, setOptions] = useState(cachedOptions)
   const [searchedValue, setSearchedValue] = useState("")
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
   const { getRootProps,
     getInputProps,
     getListboxProps,
@@ -213,7 +216,22 @@ export default function CustomizedHook({ specValue,
       onInputChange: (event, value, reason) => {
       },
       getOptionLabel: (option) => option.name,
+      open,
+      onOpen: () => setOpen(true),
+      onClose: () => setOpen(false),
     });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (validationConfig[specValue]['minLength'] === searchedValue.length)
@@ -235,7 +253,7 @@ export default function CustomizedHook({ specValue,
 
 
   return (
-    <Root>
+    <Root ref={wrapperRef}>
       <div>
         <InputWrapper>
           <select
@@ -294,7 +312,7 @@ export default function CustomizedHook({ specValue,
           <div>{`for ${specValue} need ${validationConfig[specValue]['minLength']} chars `}</div>}
         {loading && <div>Fetching data...</div>}
         {!loading && options.length === 0 && validationConfig[specValue]['minLength'] < searchedValue.length && <div>No data</div>}
-        {!loading && options.length > 0 ? (
+        {!loading && open && options.length > 0 ? (
           <Listbox {...getListboxProps()}>
             {options.map((option, index) => {
               const { key, ...optionProps } = getOptionProps({ option, index });

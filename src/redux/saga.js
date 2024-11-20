@@ -2,9 +2,6 @@ import { takeLatest, call, put } from 'redux-saga/effects';
 import axios from 'axios';
 import { setOptions, setLoading } from './actions';
 
-
-
-// API call
 const fetchOptionsApi = async (query, specValue) => {
     const response = await axios.get('http://universities.hipolabs.com/search', {
         params: { country: specValue, search: query },
@@ -12,22 +9,22 @@ const fetchOptionsApi = async (query, specValue) => {
     return response.data;
 };
 
-// Saga worker
 function* fetchOptionsSaga(action) {
-    const { query, specValue } = action.payload;
+    const { ruleId, subRuleId, query, specValue } = action.payload;
 
-    yield put(setLoading(true));
+    yield put(setLoading(ruleId, subRuleId, true));
+
     try {
         const data = yield call(fetchOptionsApi, query, specValue);
-        yield put(setOptions(data));
+
+        yield put(setOptions(ruleId, subRuleId, data));
     } catch (error) {
-        console.error(error);
+        console.error(`Error fetching options for ruleId ${ruleId} and subRuleId ${subRuleId}:`, error);
     } finally {
-        yield put(setLoading(false));
+        yield put(setLoading(ruleId, subRuleId, false));
     }
 }
 
-// Saga watcher
 export function* watchFetchOptions() {
     yield takeLatest('FETCH_OPTIONS_REQUEST', fetchOptionsSaga);
 }
