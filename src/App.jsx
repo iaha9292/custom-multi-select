@@ -1,4 +1,7 @@
 import CustomizedHook from "./AutoComplete";
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchOptionsRequest, setSelectedValues, setSpecValue } from "./redux/actions";
+
 
 const validationConfig = {
   singapore: {
@@ -16,12 +19,31 @@ const validationConfig = {
 };
 
 function App() {
-  return (
-    <>
-      <CustomizedHook validationConfig={validationConfig} />
+  const dispatch = useDispatch();
 
-    </>
-  )
+  // Access the relevant Redux state
+  const { specValue, loading, selectedValues, options } = useSelector((state) => state);
+
+  const fetchOptions = (value, specValue, validationConfig) => {
+    dispatch(fetchOptionsRequest(value, specValue, validationConfig));
+  };
+
+  return (
+    <div>
+      <CustomizedHook
+        specValue={specValue}
+        setSpecValue={(value) => dispatch(setSpecValue(value))}
+        selectedValues={selectedValues}
+        setSelectedValues={(values) => dispatch(setSelectedValues(values))}
+        cachedOptions={options}
+        loading={loading}
+        fetchOptions={fetchOptions}
+        validationConfig={validationConfig}
+      />
+
+    </div>
+  );
 }
 
 export default App;
+

@@ -1,20 +1,12 @@
 /* eslint-disable no-unused-vars */
-import { useState, useCallback, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import PropTypes from "prop-types";
 import { useAutocomplete } from "@mui/base/useAutocomplete";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
 import { autocompleteClasses } from "@mui/material/Autocomplete";
-import { useSelector, useDispatch } from 'react-redux';
 import _ from 'lodash';
-import axios from "axios";
-import {
-  setSpecValue,
-  setSelectedValues,
-  setSearchedValue,
-  fetchOptionsRequest,
-} from './redux/actions';
 
 export const validateQuery = (specValue, query, validationConfig) => {
   if (!query) return false;
@@ -189,12 +181,19 @@ const Listbox = styled("ul")(
 `
 );
 
+
 // eslint-disable-next-line react/prop-types
-export default function CustomizedHook({ validationConfig }) {
-  const dispatch = useDispatch();
-  const { specValue, options, loading, selectedValues, searchedValue } = useSelector(
-    (state) => state
-  );
+export default function CustomizedHook({ specValue,
+  setSpecValue,
+  selectedValues,
+  setSelectedValues,
+  cachedOptions,
+  loading,
+  fetchOptions,
+  validationConfig }) {
+
+  const [options, setOptions] = useState(cachedOptions)
+  const [searchedValue, setSearchedValue] = useState("")
   const { getRootProps,
     getInputProps,
     getListboxProps,
@@ -211,29 +210,28 @@ export default function CustomizedHook({ validationConfig }) {
       onChange: (event, newValue) => {
         dispatch(setSelectedValues(newValue));
       },
-      onInputChange: (event, value) => {
-        dispatch(setSearchedValue(value));
-        dispatch(fetchOptionsRequest(value, specValue, validationConfig));
+      onInputChange: (event, value, reason) => {
       },
       getOptionLabel: (option) => option.name,
     });
 
-  console.log({ specValue, options, loading, selectedValues, searchedValue })
-
-  // console.log("[194] rerendered ")
-  // useEffect(() => {
-  //   setRenderCount((prevCount) => prevCount + 1);
-  //   console.log(`CustomizedHook re-rendered: ${renderCount} times`);
-  // }, []);
   useEffect(() => {
-    dispatch(fetchOptionsRequest(searchedValue, specValue, validationConfig));
-  }, [dispatch, specValue, validationConfig, searchedValue]);
+    if (validationConfig[specValue]['minLength'] === searchedValue.length)
+      fetchOptions(searchedValue, specValue, validationConfig);
+  }, [specValue, validationConfig, searchedValue]);
+
+  useEffect(() => {
+    const filteredData = cachedOptions.filter(item =>
+      item.name.toLowerCase().includes(searchedValue.toLowerCase())
+    )
+    setOptions(filteredData)
+  }, [cachedOptions, searchedValue]);
+
 
   const handleSpecChange = (event) => {
-    dispatch(setSpecValue(event.target.value));
+    setSpecValue(event.target.value);
   };
-  // console.log({ groupedOptions })
-  // console.log({ selectedValues })
+
 
 
   return (
@@ -270,12 +268,32 @@ export default function CustomizedHook({ validationConfig }) {
             })}
             <input {...getInputProps()} value={searchedValue}
               onChange={(e) => {
-                console.log(e.target.value);
-                dispatch(setSearchedValue(e.target.value))
-              }} />
+                setSearchedValue(e.target.value)
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Backspace') {
+                  if (searchedValue.length > 0) {
+                    // Delete character from searchedValue
+                    setSearchedValue(searchedValue.slice(0, -1));
+                    e.preventDefault();
+                  } else if (selectedValues.length > 0) {
+                    // Remove last item from selectedValues when searchedValue is empty
+                    const updatedSelectedValues = [...selectedValues];
+                    updatedSelectedValues.pop();
+                    setSelectedValues(updatedSelectedValues);
+                    e.preventDefault();
+                  }
+                }
+              }}
+            />
           </InputWrapper>
         </div>
+        {searchedValue.length > 0 &&
+          validationConfig[specValue]['minLength'] > searchedValue.length &&
+          <div>{`for ${specValue} need ${validationConfig[specValue]['minLength']} chars `}</div>}
         {loading && <div>Fetching data...</div>}
+        {!loading && options.length === 0 && validationConfig[specValue]['minLength'] < searchedValue.length && <div>No data</div>}
         {!loading && options.length > 0 ? (
           <Listbox {...getListboxProps()}>
             {options.map((option, index) => {
@@ -291,19 +309,17 @@ export default function CustomizedHook({ validationConfig }) {
                     backgroundColor: isSelected ? "#e6f7ff" : "transparent",
                     fontWeight: isSelected ? "bold" : "normal",
                   }}
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     if (isSelected) {
-                      // Remove the option from selected values
-                      setSelectedValues((prev) =>
-                        prev.filter(
-                          (selectedOption) =>
-                            selectedOption.name !== option.name
+
+                      setSelectedValues(
+                        selectedValues.filter(
+                          (selectedOption) => selectedOption.name !== option.name
                         )
-                      );
+                      )
+                        ;
                     } else {
-                      // Add the option to selected values
-                      setSelectedValues((prev) => [...prev, option]);
+                      setSelectedValues([...selectedValues, option]);
                     }
                   }}
                 >

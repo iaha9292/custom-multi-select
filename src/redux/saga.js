@@ -3,29 +3,6 @@ import axios from 'axios';
 import { setOptions, setLoading } from './actions';
 
 
-export const validateQuery = (specValue, query, validationConfig) => {
-    if (!query) return false;
-
-    const config = validationConfig[specValue];
-    if (!config) return query.length >= 3; // Default validation: min length of 3
-
-    switch (config.type) {
-        case "regex":
-            return config.pattern.test(query);
-
-        case "length":
-            return query.length >= (config.minLength || 3);
-
-        case "combined":
-            return (
-                query.length >= (config.minLength || 3) && config.regex.test(query)
-            );
-
-        default:
-            return query.length >= 3; // Default fallback
-    }
-};
-
 
 // API call
 const fetchOptionsApi = async (query, specValue) => {
@@ -37,11 +14,7 @@ const fetchOptionsApi = async (query, specValue) => {
 
 // Saga worker
 function* fetchOptionsSaga(action) {
-    const { query, specValue, validationConfig } = action.payload;
-
-    // Validate query
-    const isValidQuery = validateQuery(specValue, query, validationConfig);
-    if (!isValidQuery) return;
+    const { query, specValue } = action.payload;
 
     yield put(setLoading(true));
     try {
