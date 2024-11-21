@@ -9,7 +9,7 @@ import {
   removeSubRule,
   addRule,
   removeRule,
-  clearOptions
+  clearOptions as clearOptionsAction,
 } from "./redux/actions";
 
 const validationConfig = {
@@ -29,14 +29,16 @@ const validationConfig = {
 
 function App() {
   const dispatch = useDispatch();
-
+  // redux state for  rule sub rule spec options screen
   const rules = useSelector((state) => state.rules);
 
   const fetchOptions = (ruleId, subRuleId, value, specValue) => {
+    // Fetch options for a sub-rule implementation here
     dispatch(fetchOptionsRequest(ruleId, subRuleId, value, specValue, validationConfig));
   };
 
   const handleAddRule = () => {
+    // Add a new rule implementation here
     const newRule = {
       id: Date.now(),
       sub_rules: [
@@ -53,11 +55,12 @@ function App() {
   };
 
   const handleRemoveRule = (ruleId) => {
+    // Remove an existing rule implementation here
     dispatch(removeRule(ruleId));
   };
 
-
   const handleAddSubRule = (ruleId) => {
+    // Add a new sub-rule to a specific rule implementation here
     const newSubRule = {
       id: `${ruleId}_${Date.now()}`,
       specValue: "india",
@@ -69,13 +72,24 @@ function App() {
   };
 
   const handleRemoveSubRule = (ruleId, subRuleId) => {
+    // Remove a sub-rule from a specific rule implementation here
     dispatch(removeSubRule(ruleId, subRuleId));
   };
 
+  const setSpecValueForSubRule = (ruleId, subRuleId, value) => {
+    // Set the specValue for a sub-rule implementation here
+    dispatch(setSpecValue(ruleId, subRuleId, value));
+  };
+
+  const setSelectedValuesForSubRule = (ruleId, subRuleId, values) => {
+    // Set selected values for a sub-rule implementation here
+    dispatch(setSelectedValues(ruleId, subRuleId, values));
+  };
+
   const clearOptions = (ruleId, subRuleId) => {
-    console.log("clear options ", ruleId, subRuleId)
-    dispatch(clearOptions(ruleId, subRuleId));
-  }
+    // Clear options for a sub-rule implementation here
+    dispatch(clearOptionsAction(ruleId, subRuleId));
+  };
 
   return (
     <div>
@@ -116,18 +130,12 @@ function App() {
               <h4>Sub-Rule ID: {sub_rule.id}</h4>
               <CustomizedHook
                 specValue={sub_rule.specValue}
-                setSpecValue={(value) =>
-                  dispatch(setSpecValue(rule.id, sub_rule.id, value))
-                }
+                setSpecValue={(value) => setSpecValueForSubRule(rule.id, sub_rule.id, value)}
                 selectedValues={sub_rule.selectedValues}
-                setSelectedValues={(values) =>
-                  dispatch(setSelectedValues(rule.id, sub_rule.id, values))
-                }
+                setSelectedValues={(values) => setSelectedValuesForSubRule(rule.id, sub_rule.id, values)}
                 cachedOptions={sub_rule.options}
                 loading={sub_rule.loading}
-                fetchOptions={(value) =>
-                  fetchOptions(rule.id, sub_rule.id, value, sub_rule.specValue)
-                }
+                fetchOptions={(value) => fetchOptions(rule.id, sub_rule.id, value, sub_rule.specValue)}
                 validationConfig={validationConfig}
                 clearOptions={() => clearOptions(rule.id, sub_rule.id)}
               />
