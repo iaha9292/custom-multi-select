@@ -212,12 +212,12 @@ export default function CustomizedHook({ specValue,
   }, []);
 
   useEffect(() => {
-    if (options.length > 0) {
-      setOpen(true);
+    if (searchedValue.length >= validationConfig[specValue]['minLength']) {
+      setOpen(true); // Ensure dropdown is open when enough characters are entered
     } else {
-      setOpen(false);
+      setOpen(false); // Close dropdown if search value is below min length
     }
-  }, [options]);
+  }, [searchedValue, validationConfig, specValue]);
 
   const memoizedFetchOptions = useCallback(
     (searchedValue, specValue, validationConfig) => {
@@ -322,7 +322,9 @@ export default function CustomizedHook({ specValue,
           validationConfig[specValue]['minLength'] > searchedValue.length &&
           <div>{`for ${specValue} need ${validationConfig[specValue]['minLength']} chars `}</div>}
         {loading && <div>Fetching data...</div>}
-        {!loading && options.length === 0 && validationConfig[specValue]['minLength'] < searchedValue.length && <div>No data</div>}
+        {console.log({ loading, options, searchedValue, }, validationConfig[specValue]['minLength'])}
+        {!loading && open && options.length === 0 && validationConfig[specValue]['minLength'] <= searchedValue.length &&
+          <Listbox {...getListboxProps()}><li>No data</li></Listbox>}
         {!loading && open && options.length > 0 ? (
           <Listbox {...getListboxProps()}>
             {options.map((option, index) => {
