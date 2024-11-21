@@ -322,7 +322,7 @@ export default function CustomizedHook({ specValue,
           validationConfig[specValue]['minLength'] > searchedValue.length &&
           <div>{`for ${specValue} need ${validationConfig[specValue]['minLength']} chars `}</div>}
         {loading && <div>Fetching data...</div>}
-        {console.log({ loading, options, searchedValue, }, validationConfig[specValue]['minLength'])}
+        {/* {console.log({ loading, options, searchedValue, }, validationConfig[specValue]['minLength'])} */}
         {!loading && open && options.length === 0 && validationConfig[specValue]['minLength'] <= searchedValue.length &&
           <Listbox {...getListboxProps()}><li>No data</li></Listbox>}
         {!loading && open && options.length > 0 ? (
