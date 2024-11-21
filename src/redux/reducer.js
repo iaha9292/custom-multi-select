@@ -63,7 +63,11 @@ export default function autocompleteReducer(state = initialState, action) {
               ...rule,
               sub_rules: rule.sub_rules.map((sub_rule) =>
                 sub_rule.id === action.payload.subRuleId
-                  ? { ...sub_rule, specValue: action.payload.value }
+                  ? {
+                    ...sub_rule, specValue: action.payload.value,
+                    selectedValues: [],
+                    options: []
+                  }
                   : sub_rule
               ),
             }
