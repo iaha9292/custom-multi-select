@@ -350,7 +350,9 @@ export default function CustomizedHook({ specValue,
                     } else {
                       setSelectedValues([...selectedValues, option]);
                     }
-                  }}
+                    setSearchedValue("")
+                  }
+                  }
                 >
                   <span>{option.name}</span>
                   {isSelected && <CheckIcon fontSize="small" style={{ color: "#1890ff" }} />}
