@@ -13,6 +13,11 @@ export const setOptions = (ruleId, subRuleId, options) => ({
     payload: { ruleId, subRuleId, options },
 });
 
+export const clearOptions = (ruleId, subRuleId) => ({
+    type: "CLEAR_OPTIONS",
+    payload: { ruleId, subRuleId },
+});
+
 export const setLoading = (ruleId, subRuleId, loading) => ({
     type: 'SET_LOADING',
     payload: { ruleId, subRuleId, loading },

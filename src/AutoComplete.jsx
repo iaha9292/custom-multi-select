@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import PropTypes from "prop-types";
 import { useAutocomplete } from "@mui/base/useAutocomplete";
 import CheckIcon from "@mui/icons-material/Check";
@@ -7,29 +7,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import { styled } from "@mui/material/styles";
 import { autocompleteClasses } from "@mui/material/Autocomplete";
 import _ from 'lodash';
-
-export const validateQuery = (specValue, query, validationConfig) => {
-  if (!query) return false;
-
-  const config = validationConfig[specValue];
-  if (!config) return query.length >= 3; // Default validation: min length of 3
-
-  switch (config.type) {
-    case "regex":
-      return config.pattern.test(query);
-
-    case "length":
-      return query.length >= (config.minLength || 3);
-
-    case "combined":
-      return (
-        query.length >= (config.minLength || 3) && config.regex.test(query)
-      );
-
-    default:
-      return query.length >= 3; // Default fallback
-  }
-};
 
 
 
@@ -190,12 +167,13 @@ export default function CustomizedHook({ specValue,
   cachedOptions,
   loading,
   fetchOptions,
-  validationConfig }) {
+  validationConfig, clearOptions }) {
 
   const [options, setOptions] = useState(cachedOptions)
   const [searchedValue, setSearchedValue] = useState("")
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
+  const lastFetchKey = useRef({});
 
   const { getRootProps,
     getInputProps,
@@ -234,11 +212,35 @@ export default function CustomizedHook({ specValue,
   }, []);
 
   useEffect(() => {
-    if (validationConfig[specValue]['minLength'] === searchedValue.length)
+    if (options.length > 0) {
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  }, [options]);
+
+  const memoizedFetchOptions = useCallback(
+    (searchedValue, specValue, validationConfig) => {
+      const cacheKey = `${specValue}:${searchedValue}`;
+      if (lastFetchKey.current === cacheKey) return;
+
+      lastFetchKey.current = cacheKey;
       fetchOptions(searchedValue, specValue, validationConfig);
-  }, [specValue, validationConfig, searchedValue]);
+    },
+    [fetchOptions]
+  );
 
   useEffect(() => {
+    if (validationConfig[specValue]['minLength'] === searchedValue.length) {
+      memoizedFetchOptions(searchedValue, specValue, validationConfig);
+    }
+  }, [searchedValue, specValue, validationConfig, memoizedFetchOptions]);
+
+  useEffect(() => {
+    if (cachedOptions.length === 0) {
+      setOptions([]);
+      return;
+    }
     const filteredData = cachedOptions.filter(item =>
       item.name.toLowerCase().includes(searchedValue.toLowerCase())
     )
@@ -282,10 +284,19 @@ export default function CustomizedHook({ specValue,
           <InputWrapper ref={setAnchorEl} className={focused ? "focused" : ""}>
             {selectedValues.map((option, index) => {
               const { key, ...tagProps } = getTagProps({ index });
-              return <StyledTag key={key} {...tagProps} label={option.name} />;
+              return <StyledTag key={key} {...tagProps} label={option.name}
+                onDelete={() => {
+                  // Remove the option from selectedValues
+                  const updatedSelectedValues = selectedValues.filter(
+                    (selectedOption) => selectedOption.name !== option.name
+                  );
+                  setSelectedValues(updatedSelectedValues);
+                }} />;
             })}
             <input {...getInputProps()} value={searchedValue}
               onChange={(e) => {
+                console.log("searched value ", e.target.value)
+                console.log("options ", options)
                 setSearchedValue(e.target.value)
               }}
               onKeyDown={(e) => {

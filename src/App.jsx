@@ -8,7 +8,8 @@ import {
   addSubRule,
   removeSubRule,
   addRule,
-  removeRule
+  removeRule,
+  clearOptions
 } from "./redux/actions";
 
 const validationConfig = {
@@ -23,15 +24,7 @@ const validationConfig = {
   italy: {
     type: "length",
     minLength: 2,
-  },
-  Srilanka: {
-    type: "length",
-    minLength: 3,
-  },
-  US: {
-    type: "length",
-    minLength: 2,
-  },
+  }
 };
 
 function App() {
@@ -78,6 +71,11 @@ function App() {
   const handleRemoveSubRule = (ruleId, subRuleId) => {
     dispatch(removeSubRule(ruleId, subRuleId));
   };
+
+  const clearOptions = (ruleId, subRuleId) => {
+    console.log("clear options ", ruleId, subRuleId)
+    dispatch(clearOptions(ruleId, subRuleId));
+  }
 
   return (
     <div>
@@ -131,6 +129,7 @@ function App() {
                   fetchOptions(rule.id, sub_rule.id, value, sub_rule.specValue)
                 }
                 validationConfig={validationConfig}
+                clearOptions={() => clearOptions(rule.id, sub_rule.id)}
               />
               <button
                 onClick={() => handleRemoveSubRule(rule.id, sub_rule.id)}

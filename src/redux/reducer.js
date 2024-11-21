@@ -35,14 +35,14 @@ const initialState = {
       sub_rules: [
         {
           id: '2_1',
-          specValue: 'Srilanka',
+          specValue: 'india',
           options: [],
           selectedValues: [],
           loading: false,
         },
         {
           id: '2_2',
-          specValue: 'US',
+          specValue: 'india',
           options: [],
           selectedValues: [],
           loading: false,
@@ -98,6 +98,23 @@ export default function autocompleteReducer(state = initialState, action) {
               sub_rules: rule.sub_rules.map((sub_rule) =>
                 sub_rule.id === action.payload.subRuleId
                   ? { ...sub_rule, options: action.payload.options }
+                  : sub_rule
+              ),
+            }
+            : rule
+        ),
+      };
+
+    case "CLEAR_OPTIONS":
+      return {
+        ...state,
+        rules: state.rules.map((rule) =>
+          rule.id === action.payload.ruleId
+            ? {
+              ...rule,
+              sub_rules: rule.sub_rules.map((sub_rule) =>
+                sub_rule.id === action.payload.subRuleId
+                  ? { ...sub_rule, options: [] }
                   : sub_rule
               ),
             }
